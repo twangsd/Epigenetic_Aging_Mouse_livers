@@ -1,0 +1,83 @@
+#The purpose of this script is to take shuffled dataframes described in MouseEpigeneticAgingModel_RandomizationControls.ipynb and use ipython to call an R package, SVA, to perform ComBat. The output is a ComBat normalized shuffled dataframe for training and for test
+#I am not as familiar with R syntax as I am with python, this is why I use rpy2.ipython to interface with R.
+
+from __future__ import division
+import os
+import subprocess
+import csv
+import imp
+import re
+import numpy as np
+import random 
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pickle
+import collections
+import sys
+twto = imp.load_source('twto','/cellar/users/twang/scripts/twang_toolbox.py')
+meth = imp.load_source('meth','/cellar/users/twang/scripts/methylation_scripts/methy_parsing.py')
+
+
+#Shuffled HDFFile indexed with 'methy_mat' and 'covariates'
+inf = sys.argv[1]
+#The directory to write out the normalized ComBat
+data_d = sys.argv[2]
+#Single column file with the index of the training samples
+train_inds = twto.read_single_col_file(sys.argv[3])
+#Single column file with the index of the test samples
+test_inds = twto.read_single_col_file(sys.argv[4])
+#The name to save the out hdf to.
+cat = sys.argv[5]
+#Since the input of the dataframe corresponded to a shuffled index, this retains the number and appends it to the filename above
+i=inf.split('/')[-1].split('.h5')[0].split('_')[-1]
+
+
+#Formatting shuffled DF 
+remove_0std_allnorm = pd.read_hdf(inf,'methy_mat')
+covariates_combined = pd.read_hdf(inf,'covariates')
+remove_0std_allnormT = remove_0std_allnorm.T
+
+#Calls R library sva package and performs combat
+print 'Loaded dataframes'
+%load_ext rpy2.ipython
+%R library(sva)
+
+#Sends to R-space
+%Rpush covariates_combined
+%Rpush remove_0std_allnormT
+#Formats into R datamatrix
+%R data<-data.matrix(remove_0std_allnormT)
+#Model fed to combat to normalize
+%R modcomb<- model.matrix(~age_days+C(treatment)+C(gender),data=covariates_combined)
+#Indicates batch
+%R batch<- covariates_combined$Study
+#Calls ComBat
+print 'Combat starting...'
+%R combat_nonparametric <- ComBat(data, batch, mod=modcomb, par.prior = FALSE,prior.plots = FALSE)
+#Brings normalized data back into python
+%Rpull combat_nonparametric
+
+
+
+#Saves to the HDF file
+print 'Saving stuff'
+SVA_normed_data = pd.DataFrame(np.array(combat_nonparametric),columns=remove_0std_allnormT.columns,index=remove_0std_allnormT.index)
+SVA_normed_data = SVA_normed_data.T
+#Some sites get transformed to NaN by combat, we remove these.
+nonans_sites = SVA_normed_data.columns[SVA_normed_data.isnull().sum()==0]
+#covariates_combined.loc[covariates_combined.age_days<51,'age_groupings'] = '1'
+#covariates_combined.loc[(covariates_combined.age_days>=51) & (covariates_combined.age_days<130) ,'age_groupings'] = '2'
+#covariates_combined.loc[(covariates_combined.age_days>=130) & (covariates_combined.age_days<200) ,'age_groupings'] = '3'
+#covariates_combined.loc[covariates_combined.age_days>=200 ,'age_groupings'] = '4'
+train_df = SVA_normed_data.loc[train_inds,nonans_sites]
+test_df = SVA_normed_data.loc[test_inds,nonans_sites]
+
+key_rand = '{}_{}'.format(cat,i)
+hdffile = os.path.join(data_d,'{}.h5'.format(key_rand))
+hdffile_test = os.path.join(data_d,'AdamsData_{}.h5'.format(key_rand))
+df_dict = {'methy_mat':train_df,'covariates':covariates_combined.loc[train_inds]}
+df_dict_t = {'methy_mat':test_df,'covariates':covariates_combined.loc[test_inds]}
+twto.save_hdf_file(df_dict,hdffile)
+twto.save_hdf_file(df_dict_t,hdffile_test)
+

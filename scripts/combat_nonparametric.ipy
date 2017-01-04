@@ -1,0 +1,66 @@
+#The purpose of this script is to take non-normalized data and use ipython to call an R package, SVA, to perform ComBat. The output is a ComBat normalized dataframe
+#I am not as familiar with R syntax as I am with python, this is why I use rpy2.ipython to interface with R.
+
+from __future__ import division
+import os
+import subprocess
+import csv
+import imp
+import re
+import numpy as np
+import random 
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pickle
+import collections
+import sys
+twto = imp.load_source('twto','/cellar/users/twang/scripts/twang_toolbox.py')
+meth = imp.load_source('meth','/cellar/users/twang/scripts/methylation_scripts/methy_parsing.py')
+
+
+#Not normalized data hdffile, indexed by 'methy_mat' and 'covariates'
+inf=sys.argv[1]
+#Normalized data, will be indexed by 'methy_mat' and 'covariates'
+outf=sys.argv[2]
+
+#Checks if file exists, if it does it doesn't run
+if not os.path.isfile(outf):
+    #Formatting DF to normalize
+    remove_0std_allnorm = pd.read_hdf(inf,'methy_mat')
+    covariates_combined = pd.read_hdf(inf,'covariates')
+    remove_0std_allnormT = remove_0std_allnorm.T
+
+#Interfaces with R
+    print 'Loaded dataframes'
+    %load_ext rpy2.ipython
+    %R library(sva)
+#Sends to R space and formats it for R
+    %Rpush covariates_combined
+    %Rpush remove_0std_allnormT
+    %R data<-data.matrix(remove_0std_allnormT)
+    %R modcomb<- model.matrix(~age_days+C(treatment)+C(gender),data=covariates_combined)
+    %R batch<- covariates_combined$Study
+    print 'Combat starting...'
+    %R combat_nonparametric <- ComBat(data, batch, mod=modcomb, par.prior = FALSE,prior.plots = FALSE)
+    %Rpull combat_nonparametric
+
+
+
+
+    print 'Saving stuff'
+    SVA_normed_data = pd.DataFrame(np.array(combat_nonparametric),columns=remove_0std_allnormT.columns,index=remove_0std_allnormT.index)
+    SVA_normed_data = SVA_normed_data.T
+    #Some sites get transformed to NaN by combat, we remove these.
+    nonans_sites = SVA_normed_data.columns[SVA_normed_data.isnull().sum()==0]
+    #Group ages into 4 groups for cross-validation
+    covariates_combined.loc[covariates_combined.age_days<51,'age_groupings'] = '1'
+    covariates_combined.loc[(covariates_combined.age_days>=51) & (covariates_combined.age_days<130) ,'age_groupings'] = '2'
+    covariates_combined.loc[(covariates_combined.age_days>=130) & (covariates_combined.age_days<200) ,'age_groupings'] = '3'
+    covariates_combined.loc[covariates_combined.age_days>=200 ,'age_groupings'] = '4'
+
+    df_dict = {'methy_mat':SVA_normed_data[nonans_sites],'covariates':covariates_combined}
+    twto.save_hdf_file(df_dict,outf)
+else:
+    print 'Is file'
+
