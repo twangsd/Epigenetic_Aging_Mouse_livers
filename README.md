@@ -21,4 +21,5 @@ After the manuscript has been accepted, data needed to regenerate the figures wi
 <b>Figures:</b><br>
 Figure 1 & Figure S1: EvolutionaryTrendsMouseHuman.ipynb<br>
 Figure 2 & Figure S2: MouseEpigeneticAgingModel.ipynb & MouseEpigeneticAgingModel_RandomizationControls.ipynb<br>
-Figure 3 & Figure S3: MouseEpigeneticAgingModel.ipynb & UnsupervisedAnalysis_ElasticNet_CpGs.ipynb
+Figure 3 & Figure S3: MouseEpigeneticAgingModel.ipynb & UnsupervisedAnalysis_ElasticNet_CpGs.ipynb<br>
+Additional File 3 additions, for nearest genes and part of Figure S2: ModelCpGSites_gene_proximity.ipynb
