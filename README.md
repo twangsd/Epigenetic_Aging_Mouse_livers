@@ -16,7 +16,7 @@ Bedtools on path <br>
 <b> Note: </b><br>
 Many of these scripts were run in a parallel computing framework using SGE.<br> 
 Thus, these notebooks represent an outline of the analyses that were conducted. They will not run out of the box<br>
-Data needed to regenerate the figures are hosted on Zenodo (https://doi.org/10.5281/zenodo.291983). These data will represent the end output of many of the scripts executed on a cluster. The tar.gz contains a 'data' directory, which will need to be downloaded within the same directory as the notebooks so that the scripts displayed in the notebooks can find the data used to create each plot.<br>
+Data needed to regenerate the figures are hosted on Zenodo (https://doi.org/10.5281/zenodo.291983). These data contains the end output of many of the scripts executed on a cluster. This also contains the source data for the iPython notebooks. The tar.gz contains a 'data' directory, which will need to be downloaded within the same directory as the notebooks so that the scripts displayed in the notebooks can find the data used to create each plot. It is important that the directory is named 'data' so that it is recognized by the notebooks.<br>
 <br>
 <b>Figures:</b><br>
 Figure 1 & Figure S1: EvolutionaryTrendsMouseHuman.ipynb<br>
