@@ -15,8 +15,8 @@ import matplotlib.pyplot as plt
 import pickle
 import collections
 import sys
-twto = imp.load_source('twto','/cellar/users/twang/scripts/twang_toolbox.py')
-meth = imp.load_source('meth','/cellar/users/twang/scripts/methylation_scripts/methy_parsing.py')
+twto = imp.load_source('twto','scripts/twang_toolbox.py')
+meth = imp.load_source('meth','scripts/methylation_scripts/methy_parsing.py')
 
 
 #Not normalized data hdffile, indexed by 'methy_mat' and 'covariates'
