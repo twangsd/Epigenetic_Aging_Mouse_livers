@@ -9,7 +9,7 @@ import os
 import sys
 import imp
 import subprocess
-twto = imp.load_source('twto','/cellar/users/twang/scripts/twang_toolbox.py')
+twto = imp.load_source('twto','scripts/twang_toolbox.py')
 import csv
 
 #Tab-delimited bedfile where the first column is the chromosome, second is 0, third is the length of the chromosome
