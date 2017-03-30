@@ -1,6 +1,6 @@
 # Epigenetic_Aging_Mouse_livers
 Ipython notebooks and associated scripts to generate figures for the manuscript entitled:<br> Epigenetic aging signatures in mice livers are slowed by dwarfism, calorie restriction and rapamycin treatment<br>
-<br>
+<br>DOI: 10.1186/s13059-017-1186-2 <br>
 In order to run these notebooks, you must have:<br>
 <br>
 <b>Dependencies</b><br>
